@@ -1,0 +1,52 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: projectreview
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: projectuser
+      MYSQL_PASSWORD: projectpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  django:
+    build: ./backend-django
+    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend-django:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend-django/.env.example
+    depends_on:
+      - mysql
+
+  flask:
+    build: ./flask-service
+    command: python app.py
+    volumes:
+      - ./flask-service:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./flask-service/.env.example
+    depends_on:
+      - mysql
+
+  frontend:
+    build: ./frontend-vue
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./frontend-vue:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - django
+      - flask
+
+volumes:
+  mysql_data:
