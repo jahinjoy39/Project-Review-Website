@@ -23,30 +23,32 @@ function handleLogout() {
 </script>
 
 <template>
-  <div>
-    <nav style="display: flex; align-items: center; gap: 12px;">
-      <router-link to="/">Home</router-link>
-      <router-link to="/projects">Projects</router-link>
-      <router-link v-if="auth.user" to="/upload">Upload</router-link>
-      <router-link to="/leaderboard">Leaderboard</router-link>
+  <div class="app-shell">
+    <nav class="navbar">
+      <div class="nav-left">
+        <router-link to="/">Home</router-link>
+        <router-link to="/projects">Projects</router-link>
+        <router-link v-if="auth.user" to="/upload">Upload</router-link>
+        <router-link to="/leaderboard">Leaderboard</router-link>
+      </div>
 
-      <template v-if="auth.user">
-        <span style="margin-left: auto;">
-          Logged in as: <strong>{{ auth.user.username }}</strong>
-        </span>
+      <div class="nav-right">
+        <template v-if="auth.user">
+          <span class="user-info">
+            Logged in as: <strong>{{ auth.user.username }}</strong>
+          </span>
+          <a href="#" @click.prevent="handleLogout">Logout</a>
+        </template>
 
-        <!-- Logout styled like link -->
-        <a href="#" @click.prevent="handleLogout">Logout</a>
-      </template>
-
-      <template v-else>
-        <router-link to="/login" style="margin-left: auto;">Login</router-link>
-        <router-link to="/register">Register</router-link>
-      </template>
+        <template v-else>
+          <router-link to="/login">Login</router-link>
+          <router-link to="/register">Register</router-link>
+        </template>
+      </div>
     </nav>
 
-    <div class="container">
+    <main class="container">
       <router-view />
-    </div>
+    </main>
   </div>
 </template>
