@@ -8,6 +8,37 @@
       <p v-if="project.video_url">
         <a :href="project.video_url" target="_blank">Open video</a>
       </p>
+      <p v-if="project.upload">
+        <a :href="project.upload" target="_blank">Open file</a>
+      </p>
+    </div>
+
+    <div class="card" v-if="project && project.ratings && project.ratings.length">
+      <h3>Ratings</h3>
+
+      <div
+        v-for="item in project.ratings"
+        :key="item.id"
+        style="border-top:1px solid #eee;padding-top:12px;margin-top:12px;"
+      >
+        <p><strong>Reviewer:</strong> {{ item.reviewer?.username || item.reviewer }}</p>
+        <p><strong>Score:</strong> {{ item.score }}</p>
+        <p class="small">
+          Helpful: {{ item.helpful_count || 0 }} | Not Helpful: {{ item.not_helpful_count || 0 }}
+        </p>
+
+        <div style="display:flex;gap:8px;">
+          <button @click="voteReview(item.id, 1)" style="max-width:180px;">
+            Helpful
+          </button>
+          <button
+            @click="voteReview(item.id, -1)"
+            style="max-width:180px;background:#374151;"
+          >
+            Not Helpful
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-2">
@@ -107,6 +138,18 @@ const submitRating = async () => {
     score: rating.score
   })
   await loadProject()
+}
+
+const voteReview = async (ratingId, value) => {
+  try {
+    await djangoApi.post('/projects/vote-helpful/', {
+      rating_id: ratingId,
+      value: value
+    })
+    await loadProject()
+  } catch (err) {
+    alert(err.response?.data?.error || 'Could not record vote')
+  }
 }
 
 onMounted(async () => {

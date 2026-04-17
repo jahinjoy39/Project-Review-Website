@@ -6,6 +6,7 @@ import ProjectsView from '../views/ProjectsView.vue'
 import ProjectDetailView from '../views/ProjectDetailView.vue'
 import UploadProjectView from '../views/UploadProjectView.vue'
 import LeaderboardView from '../views/LeaderboardView.vue'
+import NotificationsView from '../views/NotificationsView.vue'
 
 const routes = [
   { path: '/', component: HomeView },
@@ -14,7 +15,11 @@ const routes = [
   { path: '/projects', component: ProjectsView },
   { path: '/projects/:id', component: ProjectDetailView },
   { path: '/upload', component: UploadProjectView },
-  { path: '/leaderboard', component: LeaderboardView }
+  { path: '/leaderboard', component: LeaderboardView },
+  { path: '/notifications', component: NotificationsView }
 ]
 
-export default createRouter({ history: createWebHistory(), routes })
+export default createRouter({
+  history: createWebHistory(),
+  routes
+})

@@ -30,6 +30,7 @@ function handleLogout() {
         <router-link to="/projects">Projects</router-link>
         <router-link v-if="auth.user" to="/upload">Upload</router-link>
         <router-link to="/leaderboard">Leaderboard</router-link>
+        <router-link v-if="auth.user" to="/notifications">Notifications</router-link>
       </div>
 
       <div class="nav-right">
