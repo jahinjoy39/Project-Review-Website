@@ -10,7 +10,9 @@ onMounted(async () => {
   if (localStorage.getItem('access')) {
     try {
       await auth.fetchMe()
+      console.log('Current user in App.vue =', auth.user)
     } catch (e) {
+      console.error('App fetchMe failed:', e)
       auth.logout()
     }
   }
@@ -30,12 +32,19 @@ function handleLogout() {
         <router-link to="/projects">Projects</router-link>
         <router-link v-if="auth.user" to="/upload">Upload</router-link>
         <router-link to="/leaderboard">Leaderboard</router-link>
+
+        <router-link v-if="auth.user && auth.user.is_staff === true" to="/moderation">
+          Moderation
+        </router-link>
       </div>
 
       <div class="nav-right">
         <template v-if="auth.user">
           <span class="user-info">
             Logged in as: <strong>{{ auth.user.username }}</strong>
+          </span>
+          <span style="margin-left: 12px;">
+            staff = {{ auth.user.is_staff }}
           </span>
           <a href="#" @click.prevent="handleLogout">Logout</a>
         </template>
