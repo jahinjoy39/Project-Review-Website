@@ -4,6 +4,7 @@
       <h2>{{ project.title }}</h2>
       <p>{{ project.description }}</p>
       <p><strong>Category:</strong> {{ project.category }}</p>
+      <p><strong>Uploaded by:</strong> {{ project.creator?.username }}</p>
       <p><strong>Average Score:</strong> {{ project.average_score }}</p>
       <p v-if="project.video_url">
         <a :href="project.video_url" target="_blank">Open video</a>
@@ -11,6 +12,15 @@
       <p v-if="project.upload">
         <a :href="project.upload" target="_blank">Open file</a>
       </p>
+
+      <div v-if="canDeleteProject" style="margin-top: 16px;">
+        <button
+          @click="deleteProject"
+          style="max-width:180px;background:#b91c1c;"
+        >
+          Delete Project
+        </button>
+      </div>
     </div>
 
     <div class="card" v-if="project && project.ratings && project.ratings.length">
@@ -91,17 +101,27 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { djangoApi, flaskApi } from '../api/http'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const project = ref(null)
 const feedback = ref([])
 const comment = ref('')
 const rating = reactive({ score: 5 })
+
+const canDeleteProject = computed(() => {
+  if (!auth.user || !project.value || !project.value.creator) return false
+
+  return (
+    auth.user.is_staff === true ||
+    auth.user.id === project.value.creator.id
+  )
+})
 
 const loadProject = async () => {
   const res = await djangoApi.get(`/projects/${route.params.id}/`)
@@ -111,6 +131,19 @@ const loadProject = async () => {
 const loadFeedback = async () => {
   const res = await flaskApi.get(`/feedback/project/${route.params.id}`)
   feedback.value = res.data
+}
+
+const deleteProject = async () => {
+  const confirmed = window.confirm('Are you sure you want to delete this project?')
+  if (!confirmed) return
+
+  try {
+    await djangoApi.delete(`/projects/${route.params.id}/`)
+    alert('Project deleted successfully.')
+    router.push('/projects')
+  } catch (err) {
+    alert(err.response?.data?.detail || 'Failed to delete project')
+  }
 }
 
 const submitFeedback = async () => {

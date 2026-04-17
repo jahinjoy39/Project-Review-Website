@@ -14,11 +14,15 @@ from .serializers import (
 )
 
 
-class IsOwnerOrReadOnly(permissions.BasePermission):
+class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return getattr(obj, 'creator', None) == request.user
+
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        return getattr(obj, 'creator', None) == request.user or request.user.is_staff
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -31,7 +35,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'top_rated']:
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated(), IsOwnerOrReadOnly()]
+        return [permissions.IsAuthenticated(), IsOwnerOrAdminOrReadOnly()]
 
     def get_queryset(self):
         qs = self.queryset
