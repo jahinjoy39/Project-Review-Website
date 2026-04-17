@@ -36,6 +36,7 @@ function handleLogout() {
         <router-link v-if="auth.user && auth.user.is_staff === true" to="/moderation">
           Moderation
         </router-link>
+        <router-link v-if="auth.user" to="/notifications">Notifications</router-link>
       </div>
 
       <div class="nav-right">

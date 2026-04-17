@@ -7,29 +7,60 @@
       <input v-model="form.category" placeholder="Category" />
       <input v-model="form.video_url" placeholder="Video URL (optional)" />
       <input type="file" @change="onFileChange" />
-      <button>Create project</button>
+      <button type="submit">Create project</button>
     </form>
+
+    <p v-if="error" style="color:red;margin-top:12px;">{{ error }}</p>
+    <p v-if="success" style="color:green;margin-top:12px;">{{ success }}</p>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { djangoApi } from '../api/http'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const form = reactive({ title: '', description: '', category: '', video_url: '', upload: null })
+const error = ref('')
+const success = ref('')
 
-const onFileChange = e => {
+const form = reactive({
+  title: '',
+  description: '',
+  category: '',
+  video_url: '',
+  upload: null
+})
+
+const onFileChange = (e) => {
   form.upload = e.target.files[0]
 }
 
 const submit = async () => {
-  const data = new FormData()
-  Object.entries(form).forEach(([key, value]) => {
-    if (value) data.append(key, value)
-  })
-  await djangoApi.post('/projects/', data)
-  router.push('/projects')
+  console.log('SUBMIT CLICKED')
+  error.value = ''
+  success.value = ''
+
+  try {
+    const data = new FormData()
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== null && value !== '') {
+        data.append(key, value)
+      }
+    })
+
+    const res = await djangoApi.post('/projects/', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    console.log('project created:', res.data)
+    success.value = 'Project created successfully'
+    router.push('/projects')
+  } catch (err) {
+    console.error('create project error:', err.response?.data || err.message)
+    error.value = JSON.stringify(err.response?.data || err.message)
+  }
 }
 </script>

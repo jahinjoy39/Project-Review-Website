@@ -22,7 +22,7 @@
       <span class="badge">{{ project.category }}</span>
 
       <p class="small">
-        Average score: {{ project.average_score }}
+        Average score: {{ project.average_score ?? 'No ratings yet' }}
       </p>
     </div>
   </div>
@@ -37,10 +37,25 @@ const q = ref('')
 const category = ref('')
 
 const loadProjects = async () => {
-  const res = await djangoApi.get('/projects/', {
-    params: { q: q.value, category: category.value }
-  })
-  projects.value = res.data
+  try {
+    const params = {}
+
+    if (q.value) params.q = q.value
+    if (category.value) params.category = category.value
+
+    const res = await djangoApi.get('/projects/', { params })
+
+    if (Array.isArray(res.data)) {
+      projects.value = res.data
+    } else if (Array.isArray(res.data.results)) {
+      projects.value = res.data.results
+    } else {
+      projects.value = []
+    }
+  } catch (err) {
+    console.error('Projects load error:', err)
+    projects.value = []
+  }
 }
 
 onMounted(loadProjects)

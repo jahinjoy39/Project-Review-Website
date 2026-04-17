@@ -72,3 +72,50 @@ class Collaboration(models.Model):
 
     class Meta:
         unique_together = ('user', 'project')
+
+
+class HelpfulVote(models.Model):
+    VOTE_CHOICES = [
+        (1, 'Helpful'),
+        (-1, 'Not Helpful'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='helpful_votes'
+    )
+    rating = models.ForeignKey(
+        Rating,
+        on_delete=models.CASCADE,
+        related_name='helpful_votes'
+    )
+    value = models.SmallIntegerField(choices=VOTE_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'rating')
+
+    def __str__(self):
+        return f'{self.user} -> {self.rating} ({self.value})'
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    message = models.CharField(max_length=255)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f'{self.recipient} - {self.message}'
