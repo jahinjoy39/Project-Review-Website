@@ -1,6 +1,6 @@
+backend-django/media/
 node_modules/
 __pycache__/
 *.pyc
 .env
 .DS_Store
-backend-django/media/

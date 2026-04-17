@@ -2,14 +2,35 @@
   <div class="grid grid-2">
     <div class="card">
       <h2>Top Projects</h2>
-      <div v-for="item in projects" :key="item.project_id">
-        <p><strong>{{ item.title }}</strong> — {{ item.average_score }}</p>
+
+      <div v-if="topProjects.length === 0">
+        <p>No project data yet.</p>
+      </div>
+
+      <div v-for="project in topProjects" :key="project.id" style="margin-bottom:16px;">
+        <p>
+          <strong>{{ project.title }}</strong>
+          — {{ project.average_score }}
+        </p>
       </div>
     </div>
+
     <div class="card">
       <h2>Top Reviewers</h2>
-      <div v-for="item in reviewers" :key="item.reviewer_id">
-        <p><strong>Reviewer {{ item.reviewer_id }}</strong> — Credibility {{ item.credibility_score }}%</p>
+
+      <div v-if="topReviewers.length === 0">
+        <p>No reviewer data yet. Start voting on reviews!</p>
+      </div>
+
+      <div v-for="reviewer in topReviewers" :key="reviewer.id" style="margin-bottom:16px;">
+        <p>
+          <strong>{{ reviewer.username }}</strong>
+          — Credibility: {{ reviewer.credibility_score }}
+        </p>
+        <p class="small">
+          Helpful: {{ reviewer.helpful_received }} |
+          Not Helpful: {{ reviewer.not_helpful_received }}
+        </p>
       </div>
     </div>
   </div>
@@ -17,13 +38,32 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { djangoApi, flaskApi } from '../api/http'
+import { djangoApi } from '../api/http'
 
-const projects = ref([])
-const reviewers = ref([])
+const topProjects = ref([])
+const topReviewers = ref([])
 
-onMounted(async () => {
-  projects.value = (await djangoApi.get('/dashboard/leaderboard/')).data
-  reviewers.value = (await flaskApi.get('/leaderboard/top-reviewers')).data
-})
+const loadLeaderboard = async () => {
+  try {
+    const projectRes = await djangoApi.get('/projects/top_rated/')
+    topProjects.value = Array.isArray(projectRes.data)
+      ? projectRes.data
+      : projectRes.data.results || []
+  } catch (err) {
+    console.error('Top projects load error:', err)
+    topProjects.value = []
+  }
+
+  try {
+    const reviewerRes = await djangoApi.get('/projects/top-reviewers/')
+    topReviewers.value = Array.isArray(reviewerRes.data)
+      ? reviewerRes.data
+      : reviewerRes.data.results || []
+  } catch (err) {
+    console.error('Top reviewers load error:', err)
+    topReviewers.value = []
+  }
+}
+
+onMounted(loadLeaderboard)
 </script>

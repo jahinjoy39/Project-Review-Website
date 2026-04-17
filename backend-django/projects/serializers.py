@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Project, Rating, SearchLog, Collaboration, HelpfulVote, Notification
+from accounts.models import User
 from accounts.serializers import UserSerializer
+from .models import Project, Rating, SearchLog, Collaboration, HelpfulVote, Notification
 
 
 class RatingSerializer(serializers.ModelSerializer):
@@ -79,3 +80,44 @@ class NotificationSerializer(serializers.ModelSerializer):
             'created_at',
             'project',
         ]
+
+
+class ReviewerCredibilitySerializer(serializers.ModelSerializer):
+    credibility_score = serializers.SerializerMethodField()
+    helpful_received = serializers.SerializerMethodField()
+    not_helpful_received = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'credibility_score',
+            'helpful_received',
+            'not_helpful_received',
+        ]
+
+    def get_helpful_received(self, obj):
+        return HelpfulVote.objects.filter(
+            rating__reviewer=obj,
+            value=1
+        ).count()
+
+    def get_not_helpful_received(self, obj):
+        return HelpfulVote.objects.filter(
+            rating__reviewer=obj,
+            value=-1
+        ).count()
+
+    def get_credibility_score(self, obj):
+        helpful = HelpfulVote.objects.filter(
+            rating__reviewer=obj,
+            value=1
+        ).count()
+
+        not_helpful = HelpfulVote.objects.filter(
+            rating__reviewer=obj,
+            value=-1
+        ).count()
+
+        return helpful - not_helpful

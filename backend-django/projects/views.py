@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.db.models import Q, Avg
+from accounts.models import User
 from .models import Project, Rating, SearchLog, Collaboration, HelpfulVote, Notification
 from .serializers import (
     ProjectSerializer,
@@ -9,6 +10,7 @@ from .serializers import (
     SearchLogSerializer,
     CollaborationSerializer,
     NotificationSerializer,
+    ReviewerCredibilitySerializer,
 )
 
 
@@ -20,7 +22,10 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all().select_related('creator').prefetch_related('ratings__reviewer', 'ratings__helpful_votes')
+    queryset = Project.objects.all().select_related('creator').prefetch_related(
+        'ratings__reviewer',
+        'ratings__helpful_votes'
+    )
     serializer_class = ProjectSerializer
 
     def get_permissions(self):
@@ -95,6 +100,30 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user).order_by('-created_at')
+
+
+class ReviewerCredibilityViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ReviewerCredibilitySerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return User.objects.all().order_by('username')
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def top_reviewers(request):
+    users = User.objects.all()
+
+    ranked_users = sorted(
+        users,
+        key=lambda u: HelpfulVote.objects.filter(rating__reviewer=u, value=1).count()
+        - HelpfulVote.objects.filter(rating__reviewer=u, value=-1).count(),
+        reverse=True
+    )
+
+    serializer = ReviewerCredibilitySerializer(ranked_users[:10], many=True)
+    return Response(serializer.data)
 
 
 @api_view(['POST'])
